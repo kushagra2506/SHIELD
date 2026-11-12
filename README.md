@@ -1,7 +1,7 @@
-# SHIELD — Merchant Risk Intelligence Platform
+# SATYA — Merchant Risk Intelligence Platform
 > **PayU Innovation Challenge** | Fintech Risk & Fraud Analytics Dashboard
 
-SHIELD is a high-performance, dark-themed financial intelligence application designed to detect merchant anomalies, benchmark behavioural patterns against category peers, and inspect directed synthetic network payment flows.
+SATYA is a high-performance financial risk intelligence dashboard designed to detect merchant anomalies, benchmark behavioural patterns against category peers, and inspect directed synthetic network payment flows.
 
 ---
 
@@ -71,7 +71,7 @@ Open your browser and navigate to **[http://localhost:5173/](http://localhost:51
 
 - The application automatically loads the full dataset:
   `public/payu_merchant_fraud_dataset_enhanced.csv` (1,200 merchant records, 17 columns).
-- **Import / Replace CSV**: You can also click the **"Import CSV"** button in the top navigation bar to test any new or modified CSV dataset dynamically.
+- **Import / Replace CSV**: Click the **"Replace Dataset"** button at the bottom of the left sidebar to test any new or modified CSV dataset dynamically.
 - **Dataset Schema**:
   - `merchant_id`, `declared_category`, `monthly_volume_inr`, `monthly_txn_count`, `avg_txn_value_inr`
   - `off_hours_ratio`, `round_amount_ratio`, `payout_velocity_hrs`, `unique_payer_ratio`, `high_val_txn_ratio`, `dispute_rate_pct`
@@ -89,8 +89,9 @@ Open your browser and navigate to **[http://localhost:5173/](http://localhost:51
   - Search by Merchant ID (e.g. `MCH_1001`).
   - Filter by Declared Category or Risk Tier (`Low`, `Moderate`, `Elevated`).
   - Sort by any column (Volume, Ticket size, Dispute rate, Payout velocity, Risk).
-  - Responsive pagination (15 items/page).
+  - Responsive pagination (15 items/page) with highlighted selected row.
 - **Merchant Detail Panel**:
+  - Semi-circular divergence risk gauge.
   - Deep-dive metrics with comparison bars against category medians.
   - **Explainable Risk Indicator**: Transparent multi-factor heuristic scoring (0–100) detailing exact operational contributors without using ground-truth labels.
 
@@ -115,4 +116,3 @@ Open your browser and navigate to **[http://localhost:5173/](http://localhost:51
 
 1. **Synthetic Network Topology**: Counterparties and network edges are synthetically generated demo data. They do not represent observed banking beneficiaries, verified accounts, or real-world money trails.
 2. **Ground-Truth Isolation**: The `is_gambling_front` label is strictly sequestered for offline evaluation and demonstration validation; it is never used as a model input or risk feature.
-

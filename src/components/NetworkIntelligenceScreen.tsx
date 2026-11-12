@@ -6,8 +6,6 @@ import ReactFlow, {
   Node,
   Edge,
   MarkerType,
-  useNodesState,
-  useEdgesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -16,16 +14,11 @@ import { MerchantNode, PayerClusterNode, PayoutDestinationNode, SharedMerchantNo
 import { formatINR, formatNumber, formatPercent } from '../utils/formatters';
 import {
   GitFork,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Filter,
   Share2,
   Info,
   SlidersHorizontal,
   X,
   ExternalLink,
-  Shield,
-  Layers,
 } from 'lucide-react';
 
 const nodeTypes = {
@@ -38,7 +31,7 @@ const nodeTypes = {
 type FlowFilter = 'ALL' | 'INFLOW' | 'OUTFLOW';
 
 export const NetworkIntelligenceScreen: React.FC = () => {
-  const { selectedMerchant, merchants, selectMerchant, counterpartyMap, setActiveTab } = useMerchant();
+  const { selectedMerchant, merchants, selectMerchant, counterpartyMap } = useMerchant();
 
   // Filters state
   const [flowFilter, setFlowFilter] = useState<FlowFilter>('ALL');
@@ -53,7 +46,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
 
   if (!selectedMerchant) {
     return (
-      <div className="bg-[#111827] border border-[#243049] rounded-xl p-8 text-center text-slate-400">
+      <div className="bg-white border border-[#E8EAF0] rounded-2xl p-8 text-center text-[#6B7280] shadow-card">
         <p>No merchant selected. Select a merchant to inspect network graph topology.</p>
       </div>
     );
@@ -142,7 +135,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
     // 2. Left side: Incoming Payer Clusters
     if (shouldShowInflow) {
       const payerCount = payerFlows.length;
-      const verticalSpacing = 90;
+      const verticalSpacing = 95;
       const startY = Math.max(20, 180 - ((payerCount - 1) * verticalSpacing) / 2);
 
       payerFlows.forEach((flow, index) => {
@@ -170,18 +163,18 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           target: selectedMerchant.merchant_id,
           targetHandle: 'inflow',
           animated: true,
-          style: { stroke: '#10B981', strokeWidth: 2 },
+          style: { stroke: '#059669', strokeWidth: 2 },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: '#10B981',
-            width: 16,
-            height: 16,
+            color: '#059669',
+            width: 15,
+            height: 15,
           },
           label: `${formatINR(flow.flow_volume_inr, true)} (${formatNumber(flow.transaction_count)} txns)`,
-          labelStyle: { fill: '#6EE7B7', fontSize: 10, fontFamily: 'monospace', fontWeight: 600 },
-          labelBgStyle: { fill: '#064E3B', fillOpacity: 0.85 },
+          labelStyle: { fill: '#065F46', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 },
+          labelBgStyle: { fill: '#FFFFFF', stroke: '#D1FAE5', strokeWidth: 1, fillOpacity: 0.95 },
           labelBgPadding: [6, 3],
-          labelBgBorderRadius: 4,
+          labelBgBorderRadius: 6,
           data: {
             sourceName: flow.counterparty_id,
             targetName: selectedMerchant.merchant_id,
@@ -224,18 +217,18 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           target: nodeId,
           targetHandle: 'payout-in',
           animated: true,
-          style: { stroke: '#A855F7', strokeWidth: 2 },
+          style: { stroke: '#C8102E', strokeWidth: 2 },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: '#A855F7',
-            width: 16,
-            height: 16,
+            color: '#C8102E',
+            width: 15,
+            height: 15,
           },
           label: `${formatINR(flow.flow_volume_inr, true)} (${formatNumber(flow.transaction_count)} txns)`,
-          labelStyle: { fill: '#E9D5FF', fontSize: 10, fontFamily: 'monospace', fontWeight: 600 },
-          labelBgStyle: { fill: '#581C87', fillOpacity: 0.85 },
+          labelStyle: { fill: '#991B1B', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 },
+          labelBgStyle: { fill: '#FFFFFF', stroke: '#FEE2E2', strokeWidth: 1, fillOpacity: 0.95 },
           labelBgPadding: [6, 3],
-          labelBgBorderRadius: 4,
+          labelBgBorderRadius: 6,
           data: {
             sourceName: selectedMerchant.merchant_id,
             targetName: flow.counterparty_id,
@@ -247,9 +240,9 @@ export const NetworkIntelligenceScreen: React.FC = () => {
       });
     }
 
-    // 4. Expanded Shared Hubs: Co-connected merchants
+    // 4. Expanded Shared Hubs
     if (expandShared && sharedMerchantsInfo.length > 0) {
-      const topShared = sharedMerchantsInfo.slice(0, 5); // display up to 5 key shared peers to preserve readability
+      const topShared = sharedMerchantsInfo.slice(0, 5);
       topShared.forEach((item, index) => {
         const sharedNodeId = `shared_mch_${item.merchant.merchant_id}`;
 
@@ -265,7 +258,6 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           },
         });
 
-        // Link shared merchant to the corresponding shared counterparty
         for (const cpId of item.counterparties) {
           const payerNode = generatedNodes.find(n => n.id === `payer_${cpId}`);
           const payoutNode = generatedNodes.find(n => n.id === `payout_${cpId}`);
@@ -276,11 +268,11 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               source: payerNode.id,
               target: sharedNodeId,
               targetHandle: 'shared-target',
-              style: { stroke: '#F59E0B', strokeDasharray: '5,5', strokeWidth: 1.5 },
-              markerEnd: { type: MarkerType.ArrowClosed, color: '#F59E0B' },
-              label: 'Shared Inflow Hub',
-              labelStyle: { fill: '#FDE68A', fontSize: 9, fontFamily: 'monospace' },
-              labelBgStyle: { fill: '#78350F', fillOpacity: 0.8 },
+              style: { stroke: '#D97706', strokeDasharray: '4,4', strokeWidth: 1.5 },
+              markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706' },
+              label: 'Shared Cluster Link',
+              labelStyle: { fill: '#92400E', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' },
+              labelBgStyle: { fill: '#FFFFFF', stroke: '#FDE68A', fillOpacity: 0.95 },
             });
           }
 
@@ -290,11 +282,11 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               source: sharedNodeId,
               sourceHandle: 'shared-source',
               target: payoutNode.id,
-              style: { stroke: '#F59E0B', strokeDasharray: '5,5', strokeWidth: 1.5 },
-              markerEnd: { type: MarkerType.ArrowClosed, color: '#F59E0B' },
+              style: { stroke: '#D97706', strokeDasharray: '4,4', strokeWidth: 1.5 },
+              markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706' },
               label: 'Shared Payout Hub',
-              labelStyle: { fill: '#FDE68A', fontSize: 9, fontFamily: 'monospace' },
-              labelBgStyle: { fill: '#78350F', fillOpacity: 0.8 },
+              labelStyle: { fill: '#92400E', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' },
+              labelBgStyle: { fill: '#FFFFFF', stroke: '#FDE68A', fillOpacity: 0.95 },
             });
           }
         }
@@ -334,7 +326,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           type: 'counterparty',
           data: {
             counterpartyId: node.data.counterpartyId,
-            type: node.type === 'payerClusterNode' ? 'Inflow Payer Cluster' : 'Payout Destination Hub',
+            type: node.type === 'payerClusterNode' ? 'Incoming Payer Cluster' : 'Payout Destination Hub',
             flowVolume: node.data.flowVolume,
             txnCount: node.data.txnCount,
             connectedMerchants: meta ? meta.connectedMerchants : [selectedMerchant.merchant_id],
@@ -359,84 +351,82 @@ export const NetworkIntelligenceScreen: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Critical Mandatory Transparency Banner */}
-      <div className="bg-[#1C1322] border-l-4 border-l-amber-500 border border-amber-500/30 rounded-xl p-3.5 flex items-start gap-3 shadow-md">
-        <Info className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-        <div className="text-xs">
-          <div className="font-bold text-amber-300 font-mono tracking-wide uppercase flex items-center gap-2">
-            SYNTHETIC NETWORK DATA — DEMONSTRATION ONLY
-            <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded text-amber-200 normal-case border border-amber-500/30">
-              Not observed real-world payment rails
-            </span>
-          </div>
-          <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
-            Payer clusters and payout counterparties in this network graph are synthetically generated demo entities.
-            Some shared network hubs were synthetically assigned to illustrate graph topology. They do not represent
-            actual bank accounts, beneficiaries, or verified illicit money trails.
-          </p>
-        </div>
-      </div>
-
       {/* Network Summary Metrics Header */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <div className="bg-[#111827] border border-[#243049] p-3 rounded-xl">
-          <span className="text-[10px] font-semibold uppercase text-slate-400 block">Payer Clusters (Inflow)</span>
-          <span className="text-base font-bold font-mono text-emerald-400">{payerFlows.length} clusters</span>
-          <span className="text-[10px] text-slate-400 block font-mono">{formatINR(totalInflowVolume, true)}</span>
+      <div className="bg-white rounded-2xl border border-[#E8EAF0] shadow-card p-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between pb-3 mb-3 border-b border-[#F3F4F6] gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-[#FDF2F2] text-[#C8102E] flex items-center justify-center">
+              <GitFork className="w-3.5 h-3.5" />
+            </div>
+            <h3 className="text-sm font-semibold text-[#111827]">Network Flow Summary</h3>
+          </div>
+          <div className="text-xs text-[#6B7280]">
+            Target: <strong className="font-mono text-[#111827]">{selectedMerchant.merchant_id}</strong> · Inflow: <strong className="font-mono text-[#111827]">{formatINR(totalInflowVolume, true)}</strong> · Outflow: <strong className="font-mono text-[#111827]">{formatINR(totalOutflowVolume, true)}</strong>
+          </div>
         </div>
 
-        <div className="bg-[#111827] border border-[#243049] p-3 rounded-xl">
-          <span className="text-[10px] font-semibold uppercase text-slate-400 block">Payout Hubs (Outflow)</span>
-          <span className="text-base font-bold font-mono text-purple-400">{payoutFlows.length} hubs</span>
-          <span className="text-[10px] text-slate-400 block font-mono">{formatINR(totalOutflowVolume, true)}</span>
-        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-[#F9FAFB] border border-[#E8EAF0] p-3 rounded-xl">
+            <span className="text-[10px] font-semibold uppercase text-[#6B7280] block">Payer Clusters (Inflow)</span>
+            <span className="text-base font-semibold font-mono text-emerald-700">{payerFlows.length} clusters</span>
+            <span className="text-[10px] text-[#6B7280] block font-mono">{formatINR(totalInflowVolume, true)}</span>
+          </div>
 
-        <div className="bg-[#111827] border border-[#243049] p-3 rounded-xl">
-          <span className="text-[10px] font-semibold uppercase text-slate-400 block">Total Inflow Volume</span>
-          <span className="text-base font-bold font-mono text-white">{formatINR(totalInflowVolume, true)}</span>
-          <span className="text-[10px] text-slate-400 block truncate">{formatINR(totalInflowVolume)}</span>
-        </div>
+          <div className="bg-[#F9FAFB] border border-[#E8EAF0] p-3 rounded-xl">
+            <span className="text-[10px] font-semibold uppercase text-[#6B7280] block">Payout Hubs (Outflow)</span>
+            <span className="text-base font-semibold font-mono text-[#C8102E]">{payoutFlows.length} hubs</span>
+            <span className="text-[10px] text-[#6B7280] block font-mono">{formatINR(totalOutflowVolume, true)}</span>
+          </div>
 
-        <div className="bg-[#111827] border border-[#243049] p-3 rounded-xl">
-          <span className="text-[10px] font-semibold uppercase text-slate-400 block">Total Outflow Volume</span>
-          <span className="text-base font-bold font-mono text-white">{formatINR(totalOutflowVolume, true)}</span>
-          <span className="text-[10px] text-slate-400 block truncate">{formatINR(totalOutflowVolume)}</span>
-        </div>
+          <div className="bg-[#F9FAFB] border border-[#E8EAF0] p-3 rounded-xl">
+            <span className="text-[10px] font-semibold uppercase text-[#6B7280] block">Total Inflow Volume</span>
+            <span className="text-base font-semibold font-mono text-[#111827]">{formatINR(totalInflowVolume, true)}</span>
+            <span className="text-[10px] text-[#9CA3AF] block truncate">{formatINR(totalInflowVolume)}</span>
+          </div>
 
-        <div className="bg-[#111827] border border-[#243049] p-3 rounded-xl">
-          <span className="text-[10px] font-semibold uppercase text-slate-400 block">Shared Counterparties</span>
-          <span className="text-base font-bold font-mono text-amber-400">
-            {sharedMerchantsInfo.length} peer merchants
-          </span>
-          <span className="text-[10px] text-slate-400 block">Co-connected across dataset</span>
+          <div className="bg-[#F9FAFB] border border-[#E8EAF0] p-3 rounded-xl">
+            <span className="text-[10px] font-semibold uppercase text-[#6B7280] block">Total Outflow Volume</span>
+            <span className="text-base font-semibold font-mono text-[#111827]">{formatINR(totalOutflowVolume, true)}</span>
+            <span className="text-[10px] text-[#9CA3AF] block truncate">{formatINR(totalOutflowVolume)}</span>
+          </div>
+
+          <div className="bg-[#F9FAFB] border border-[#E8EAF0] p-3 rounded-xl">
+            <span className="text-[10px] font-semibold uppercase text-[#6B7280] block">Shared Counterparties</span>
+            <span className="text-base font-semibold font-mono text-amber-700">
+              {sharedMerchantsInfo.length} peer merchants
+            </span>
+            <span className="text-[10px] text-[#6B7280] block">Co-connected across dataset</span>
+          </div>
         </div>
       </div>
 
-      {/* Network Filter Bar */}
-      <div className="bg-[#111827] border border-[#243049] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+      {/* Network Filter Toolbar */}
+      <div className="bg-white rounded-2xl border border-[#E8EAF0] shadow-card p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Merchant selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 font-medium">Focus Merchant:</span>
+            <span className="text-[#6B7280] font-medium">Focus Merchant:</span>
             <select
               value={selectedMerchant.merchant_id}
               onChange={e => selectMerchant(e.target.value)}
-              className="bg-[#162032] border border-[#2B3B55] text-xs text-white px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 font-mono font-semibold"
+              className="bg-white border border-[#E8EAF0] text-xs text-[#111827] px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-[#C8102E] font-mono font-medium cursor-pointer"
             >
               {merchants.map(m => (
                 <option key={m.merchant_id} value={m.merchant_id}>
-                  {m.merchant_id} — {m.declared_category}
+                  {m.merchant_id} – {m.declared_category}
                 </option>
               ))}
             </select>
           </div>
 
           {/* Direction Filter */}
-          <div className="flex items-center gap-1 bg-[#0A0E17] p-1 rounded-lg border border-[#243049]">
+          <div className="flex items-center gap-1 bg-[#F4F5F8] p-1 rounded-lg border border-[#E8EAF0]">
             <button
               onClick={() => setFlowFilter('ALL')}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
-                flowFilter === 'ALL' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                flowFilter === 'ALL'
+                  ? 'bg-[#111827] text-white font-medium shadow-xs'
+                  : 'text-[#6B7280] hover:text-[#111827]'
               }`}
             >
               All Flows
@@ -444,7 +434,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
             <button
               onClick={() => setFlowFilter('INFLOW')}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
-                flowFilter === 'INFLOW' ? 'bg-emerald-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                flowFilter === 'INFLOW' ? 'bg-emerald-700 text-white font-medium shadow-xs' : 'text-[#6B7280] hover:text-[#111827]'
               }`}
             >
               Incoming (Inflow)
@@ -452,7 +442,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
             <button
               onClick={() => setFlowFilter('OUTFLOW')}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
-                flowFilter === 'OUTFLOW' ? 'bg-purple-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                flowFilter === 'OUTFLOW' ? 'bg-[#C8102E] text-white font-medium shadow-xs' : 'text-[#6B7280] hover:text-[#111827]'
               }`}
             >
               Outgoing (Payout)
@@ -460,7 +450,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           </div>
 
           {/* Min volume filter */}
-          <div className="flex items-center gap-2 text-slate-400 bg-[#0A0E17] px-3 py-1.5 rounded-lg border border-[#243049]">
+          <div className="flex items-center gap-2 text-[#6B7280] bg-[#F4F5F8] px-3 py-1.5 rounded-lg border border-[#E8EAF0]">
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Min Flow:</span>
             <input
@@ -470,13 +460,13 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               step={10000}
               value={minVolume}
               onChange={e => setMinVolume(Number(e.target.value))}
-              className="w-20 accent-blue-500 cursor-pointer"
+              className="w-20 accent-[#C8102E] cursor-pointer"
             />
-            <span className="font-mono text-white text-[11px]">{formatINR(minVolume, true)}</span>
+            <span className="font-mono text-[#111827] text-[11px] font-semibold">{formatINR(minVolume, true)}</span>
             {minVolume > 0 && (
               <button
                 onClick={() => setMinVolume(0)}
-                className="text-[10px] text-slate-400 hover:text-white ml-1"
+                className="text-[10px] text-[#9CA3AF] hover:text-[#111827] ml-1"
                 title="Reset min volume"
               >
                 ✕
@@ -485,20 +475,20 @@ export const NetworkIntelligenceScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Toggle Shared Hubs Expansion */}
+        {/* Toggle Shared Hubs Expansion Button */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExpandShared(!expandShared)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
               expandShared
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-900/30'
-                : 'bg-[#162032] text-slate-300 border-[#2B3B55] hover:bg-[#202C45]'
+                ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-xs'
+                : 'bg-white text-[#374151] border-[#E8EAF0] hover:bg-slate-50'
             }`}
           >
-            <Share2 className="w-3.5 h-3.5 text-amber-400" />
+            <Share2 className="w-3.5 h-3.5 text-amber-600" />
             <span>{expandShared ? 'Collapse Shared Hubs' : 'Expand Shared Counterparty Network'}</span>
             {sharedMerchantsInfo.length > 0 && (
-              <span className="ml-1 text-[10px] bg-amber-400/20 text-amber-300 px-1.5 py-0.2 rounded-full font-mono">
+              <span className="ml-1 text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-full font-mono font-semibold">
                 {sharedMerchantsInfo.length}
               </span>
             )}
@@ -506,21 +496,21 @@ export const NetworkIntelligenceScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Network Graph Canvas + Node/Edge Detail Inspector */}
+      {/* Network Graph Canvas + Node/Edge Detail Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Canvas (8 or 12 cols depending on inspector) */}
+        {/* Canvas */}
         <div
           className={`${
             inspectedEntity ? 'lg:col-span-8 xl:col-span-9' : 'lg:col-span-12'
-          } h-[600px] bg-[#0A0E17] border border-[#243049] rounded-xl overflow-hidden relative shadow-2xl transition-all`}
+          } h-[600px] bg-[#F8FAFC] border border-[#E8EAF0] rounded-2xl overflow-hidden relative shadow-card transition-all`}
         >
           {/* Flow Direction Indicator Guide */}
-          <div className="absolute top-3 left-4 z-10 flex items-center gap-2 bg-[#0E1526]/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#243049] text-[11px] text-slate-300 select-none pointer-events-none">
-            <span className="text-emerald-400 font-bold">Payer Clusters</span>
-            <span className="text-slate-500">➔</span>
-            <span className="text-blue-400 font-bold">Merchant</span>
-            <span className="text-slate-500">➔</span>
-            <span className="text-purple-400 font-bold">Payout Destinations</span>
+          <div className="absolute top-3 left-4 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-[#E8EAF0] text-[11px] text-[#4B5563] shadow-xs select-none pointer-events-none">
+            <span className="text-emerald-700 font-bold">Payer Clusters</span>
+            <span className="text-[#9CA3AF]">→</span>
+            <span className="text-[#111827] font-bold">Target Merchant</span>
+            <span className="text-[#9CA3AF]">→</span>
+            <span className="text-[#C8102E] font-bold">Payout Destinations</span>
           </div>
 
           <ReactFlow
@@ -534,30 +524,32 @@ export const NetworkIntelligenceScreen: React.FC = () => {
             minZoom={0.2}
             maxZoom={2.5}
           >
-            <Background color="#1E293B" gap={24} size={1} />
+            <Background color="#CBD5E1" gap={20} size={1} />
             <Controls className="!m-3" />
             <MiniMap
               nodeColor={node => {
-                if (node.type === 'merchantNode') return '#38BDF8';
-                if (node.type === 'payerClusterNode') return '#10B981';
-                if (node.type === 'payoutDestinationNode') return '#A855F7';
-                return '#F59E0B';
+                if (node.type === 'merchantNode') return '#10131C';
+                if (node.type === 'payerClusterNode') return '#059669';
+                if (node.type === 'payoutDestinationNode') return '#C8102E';
+                return '#D97706';
               }}
-              maskColor="rgba(10, 14, 23, 0.7)"
-              className="!m-3 !border !border-[#243049] !bg-[#0E1526] !rounded-lg"
+              maskColor="rgba(248, 250, 252, 0.7)"
+              className="!m-3 !border !border-[#E8EAF0] !bg-white !rounded-lg"
             />
           </ReactFlow>
         </div>
 
         {/* Entity Inspector Side Panel */}
         {inspectedEntity && (
-          <div className="lg:col-span-4 xl:col-span-3 bg-[#111827] border border-[#243049] rounded-xl p-4 shadow-xl flex flex-col justify-between max-h-[600px] overflow-y-auto">
+          <div className="lg:col-span-4 xl:col-span-3 bg-white border border-[#E8EAF0] rounded-2xl p-4 shadow-card flex flex-col justify-between max-h-[600px] overflow-y-auto">
             <div>
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#243049] mb-3">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6] mb-3">
                 <div className="flex items-center gap-2">
-                  <GitFork className="w-4 h-4 text-cyan-400" />
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                  <div className="w-6 h-6 rounded-md bg-[#FDF2F2] text-[#C8102E] flex items-center justify-center">
+                    <GitFork className="w-3.5 h-3.5" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#111827]">
                     {inspectedEntity.type === 'merchant'
                       ? 'Merchant Intelligence'
                       : inspectedEntity.type === 'counterparty'
@@ -567,7 +559,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setInspectedEntity(null)}
-                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#1E293B]"
+                  className="p-1 rounded-md text-[#9CA3AF] hover:text-[#111827] hover:bg-slate-100"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -577,34 +569,34 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               {inspectedEntity.type === 'merchant' && (
                 <div className="space-y-3 text-xs">
                   <div>
-                    <span className="font-mono text-base font-bold text-cyan-400 block">
+                    <span className="font-mono text-base font-semibold text-[#111827] block">
                       {inspectedEntity.data.merchant_id}
                     </span>
-                    <span className="text-slate-400 text-[11px]">{inspectedEntity.data.declared_category}</span>
+                    <span className="text-[#6B7280] text-[11px]">{inspectedEntity.data.declared_category}</span>
                   </div>
 
-                  <div className="bg-[#0C1220] p-2.5 rounded-lg border border-[#1E293B] space-y-1.5 font-mono text-[11px]">
+                  <div className="bg-[#F9FAFB] p-3 rounded-xl border border-[#E8EAF0] space-y-1.5 font-mono text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Monthly Volume:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#6B7280]">Monthly Volume:</span>
+                      <span className="text-[#111827] font-semibold">
                         {formatINR(inspectedEntity.data.monthly_volume_inr)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Monthly Txns:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#6B7280]">Monthly Txns:</span>
+                      <span className="text-[#111827] font-semibold">
                         {formatNumber(inspectedEntity.data.monthly_txn_count)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Avg Txn Value:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#6B7280]">Avg Txn Value:</span>
+                      <span className="text-[#111827] font-semibold">
                         {formatINR(inspectedEntity.data.avg_txn_value_inr)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Dispute Rate:</span>
-                      <span className="text-red-400 font-semibold">
+                      <span className="text-[#6B7280]">Dispute Rate:</span>
+                      <span className="text-[#C8102E] font-semibold">
                         {formatPercent(inspectedEntity.data.dispute_rate_pct, true)}
                       </span>
                     </div>
@@ -616,7 +608,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
                         selectMerchant(inspectedEntity.data.merchant_id);
                         setInspectedEntity(null);
                       }}
-                      className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className="w-full py-2 px-3 rounded-lg bg-[#C8102E] hover:bg-[#A50D25] text-white font-medium text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
                     >
                       <span>Focus on this Merchant</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -629,28 +621,28 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               {inspectedEntity.type === 'counterparty' && (
                 <div className="space-y-3 text-xs">
                   <div>
-                    <span className="font-mono text-sm font-bold text-emerald-400 block break-all">
+                    <span className="font-mono text-sm font-semibold text-emerald-700 block break-all">
                       {inspectedEntity.data.counterpartyId}
                     </span>
-                    <span className="text-slate-400 text-[11px]">{inspectedEntity.data.type}</span>
+                    <span className="text-[#6B7280] text-[11px]">{inspectedEntity.data.type}</span>
                   </div>
 
-                  <div className="bg-[#0C1220] p-2.5 rounded-lg border border-[#1E293B] space-y-1.5 font-mono text-[11px]">
+                  <div className="bg-[#F9FAFB] p-3 rounded-xl border border-[#E8EAF0] space-y-1.5 font-mono text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Connected Merchants:</span>
-                      <span className="text-amber-300 font-bold">
+                      <span className="text-[#6B7280]">Connected Merchants:</span>
+                      <span className="text-amber-700 font-bold">
                         {inspectedEntity.data.connectedMerchants.length}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Total Throughput:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#6B7280]">Total Throughput:</span>
+                      <span className="text-[#111827] font-semibold">
                         {formatINR(inspectedEntity.data.totalVolumeInr, true)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Total Txns:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#6B7280]">Total Txns:</span>
+                      <span className="text-[#111827] font-semibold">
                         {formatNumber(inspectedEntity.data.totalTxnCount)}
                       </span>
                     </div>
@@ -658,7 +650,7 @@ export const NetworkIntelligenceScreen: React.FC = () => {
 
                   {/* Connected Merchants List */}
                   <div>
-                    <span className="text-[11px] font-semibold uppercase text-slate-400 block mb-1.5">
+                    <span className="text-[11px] font-semibold uppercase text-[#6B7280] block mb-1.5">
                       Co-Connected Merchants ({inspectedEntity.data.connectedMerchants.length})
                     </span>
                     <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
@@ -669,15 +661,15 @@ export const NetworkIntelligenceScreen: React.FC = () => {
                             selectMerchant(mId);
                             setInspectedEntity(null);
                           }}
-                          className={`p-1.5 rounded flex items-center justify-between text-[11px] font-mono cursor-pointer transition-colors ${
+                          className={`p-1.5 rounded-lg flex items-center justify-between text-[11px] font-mono cursor-pointer transition-colors ${
                             mId === selectedMerchant.merchant_id
-                              ? 'bg-blue-600/20 text-cyan-300 font-bold border border-blue-500/30'
-                              : 'bg-[#151F33] hover:bg-[#1E2C4A] text-slate-300'
+                              ? 'bg-[#FDF2F2] text-[#C8102E] font-bold border border-[#FEE2E2]'
+                              : 'bg-[#F9FAFB] hover:bg-[#F3F4F6] text-[#374151]'
                           }`}
                         >
                           <span>{mId}</span>
-                          <span className="text-[10px] text-blue-400 flex items-center gap-0.5">
-                            Focus ➔
+                          <span className="text-[10px] text-[#C8102E] flex items-center gap-0.5">
+                            Focus →
                           </span>
                         </div>
                       ))}
@@ -690,37 +682,37 @@ export const NetworkIntelligenceScreen: React.FC = () => {
               {inspectedEntity.type === 'edge' && (
                 <div className="space-y-3 text-xs">
                   <div>
-                    <span className="text-xs uppercase font-semibold text-blue-400 block">
+                    <span className="text-xs uppercase font-semibold text-[#111827] block">
                       {inspectedEntity.data.direction === 'inflow_to_merchant'
                         ? 'Incoming Payer Flow'
                         : 'Outgoing Payout Flow'}
                     </span>
-                    <div className="font-mono text-[11px] text-slate-300 mt-1 flex items-center gap-1.5">
-                      <span className="text-cyan-400 font-bold">{inspectedEntity.data.sourceName}</span>
-                      <span>➔</span>
-                      <span className="text-purple-400 font-bold">{inspectedEntity.data.targetName}</span>
+                    <div className="font-mono text-[11px] text-[#4B5563] mt-1 flex items-center gap-1.5">
+                      <span className="text-emerald-700 font-semibold">{inspectedEntity.data.sourceName}</span>
+                      <span>→</span>
+                      <span className="text-[#C8102E] font-semibold">{inspectedEntity.data.targetName}</span>
                     </div>
                   </div>
 
-                  <div className="bg-[#0C1220] p-2.5 rounded-lg border border-[#1E293B] space-y-1.5 font-mono text-[11px]">
+                  <div className="bg-[#F9FAFB] p-3 rounded-xl border border-[#E8EAF0] space-y-1.5 font-mono text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Flow Volume:</span>
-                      <span className="text-white font-bold">{formatINR(inspectedEntity.data.volume)}</span>
+                      <span className="text-[#6B7280]">Flow Volume:</span>
+                      <span className="text-[#111827] font-semibold">{formatINR(inspectedEntity.data.volume)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Txn Count:</span>
-                      <span className="text-white">{formatNumber(inspectedEntity.data.txnCount)}</span>
+                      <span className="text-[#6B7280]">Txn Count:</span>
+                      <span className="text-[#111827]">{formatNumber(inspectedEntity.data.txnCount)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Flow Direction:</span>
-                      <span className="text-cyan-300">{inspectedEntity.data.direction}</span>
+                      <span className="text-[#6B7280]">Flow Direction:</span>
+                      <span className="text-[#111827] font-medium">{inspectedEntity.data.direction}</span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="pt-3 border-t border-[#243049] text-[10px] text-slate-400">
+            <div className="pt-3 border-t border-[#F3F4F6] text-[10px] text-[#9CA3AF]">
               Click any node or link in the graph to inspect structural details.
             </div>
           </div>
@@ -729,4 +721,3 @@ export const NetworkIntelligenceScreen: React.FC = () => {
     </div>
   );
 };
-

@@ -7,25 +7,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        shield: {
-          dark: '#0B0F19',
-          card: '#111827',
-          surface: '#1A2234',
-          border: '#243049',
-          accent: '#3B82F6',
-          danger: '#EF4444',
-          warning: '#F59E0B',
-          success: '#10B981',
-          textMuted: '#94A3B8',
-          textHighlight: '#F8FAFC',
+        satya: {
+          crimson: '#C8102E',
+          'crimson-hover': '#A50D25',
+          'crimson-light': '#FDF2F2',
+          dark: '#10131C',
+          'dark-surface': '#161B26',
+          'dark-card': '#1A1F2C',
+          page: '#F4F5F8',
+          card: '#FFFFFF',
+          border: '#E8EAF0',
+          primary: '#111827',
+          secondary: '#6B7280',
+          muted: '#9CA3AF',
         }
       },
       fontFamily: {
-        mono: ['JetBrains Mono', 'Roboto Mono', 'ui-monospace', 'monospace'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Instrument Sans"', '"Hanken Grotesk"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'Roboto Mono', 'ui-monospace', 'monospace'],
+      },
+      boxShadow: {
+        card: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
+        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
       }
     },
   },
   plugins: [],
 }
-

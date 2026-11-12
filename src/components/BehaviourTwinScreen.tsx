@@ -13,23 +13,19 @@ import {
 } from 'recharts';
 import {
   Layers,
-  TrendingUp,
   AlertCircle,
-  HelpCircle,
-  Clock,
-  Coins,
-  Percent,
   CheckCircle2,
-  DollarSign,
-  ShieldAlert,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
+import { MerchantRecord } from '../types';
 
 export const BehaviourTwinScreen: React.FC = () => {
   const { selectedMerchant, merchants, selectMerchant, categoryStatsMap } = useMerchant();
 
   if (!selectedMerchant) {
     return (
-      <div className="bg-[#111827] border border-[#243049] rounded-xl p-8 text-center text-slate-400">
+      <div className="bg-white border border-[#E8EAF0] rounded-2xl p-8 text-center text-[#6B7280] shadow-card">
         <p>No merchant selected. Please select a merchant to view behaviour twin analysis.</p>
       </div>
     );
@@ -46,7 +42,7 @@ export const BehaviourTwinScreen: React.FC = () => {
   const categoryRanges = useMemo(() => {
     if (categoryPeers.length === 0) return null;
 
-    const getMinMax = (extractor: (m: import('../types').MerchantRecord) => number) => {
+    const getMinMax = (extractor: (m: MerchantRecord) => number) => {
       const vals = categoryPeers.map(extractor).filter(v => !isNaN(v));
       return {
         min: Math.min(...vals),
@@ -95,7 +91,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.monthly_volume_inr, categoryRanges.monthlyVolume),
         normMedian: normalize(categoryMedians.medianVolume, categoryRanges.monthlyVolume),
         isAnomaly: Math.abs(calculateDeltaPct(selectedMerchant.monthly_volume_inr, categoryMedians.medianVolume)) > 100,
-        direction: 'higher', // neutral
       },
       {
         id: 'avg_txn_val',
@@ -110,7 +105,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.avg_txn_value_inr, categoryRanges.avgTxnValue),
         normMedian: normalize(categoryMedians.medianAvgTxnValue, categoryRanges.avgTxnValue),
         isAnomaly: selectedMerchant.avg_txn_value_inr > categoryMedians.medianAvgTxnValue * 2.5,
-        direction: 'higher',
       },
       {
         id: 'off_hours',
@@ -125,7 +119,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.off_hours_ratio, categoryRanges.offHoursRatio),
         normMedian: normalize(categoryMedians.medianOffHoursRatio, categoryRanges.offHoursRatio),
         isAnomaly: selectedMerchant.off_hours_ratio > categoryMedians.medianOffHoursRatio * 2,
-        direction: 'higher',
       },
       {
         id: 'round_amount',
@@ -140,7 +133,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.round_amount_ratio, categoryRanges.roundAmountRatio),
         normMedian: normalize(categoryMedians.medianRoundAmountRatio, categoryRanges.roundAmountRatio),
         isAnomaly: selectedMerchant.round_amount_ratio > categoryMedians.medianRoundAmountRatio * 1.8,
-        direction: 'higher',
       },
       {
         id: 'unique_payer',
@@ -155,7 +147,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.unique_payer_ratio, categoryRanges.uniquePayerRatio),
         normMedian: normalize(categoryMedians.medianUniquePayerRatio, categoryRanges.uniquePayerRatio),
         isAnomaly: selectedMerchant.unique_payer_ratio < categoryMedians.medianUniquePayerRatio * 0.6,
-        direction: 'lower',
       },
       {
         id: 'high_val',
@@ -170,7 +161,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.high_val_txn_ratio, categoryRanges.highValRatio),
         normMedian: normalize(categoryMedians.medianHighValRatio, categoryRanges.highValRatio),
         isAnomaly: selectedMerchant.high_val_txn_ratio > categoryMedians.medianHighValRatio * 2,
-        direction: 'higher',
       },
       {
         id: 'dispute_rate',
@@ -185,7 +175,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.dispute_rate_pct, categoryRanges.disputeRate),
         normMedian: normalize(categoryMedians.medianDisputeRate, categoryRanges.disputeRate),
         isAnomaly: selectedMerchant.dispute_rate_pct > categoryMedians.medianDisputeRate * 2.5,
-        direction: 'higher',
       },
       {
         id: 'payout_velocity',
@@ -200,7 +189,6 @@ export const BehaviourTwinScreen: React.FC = () => {
         normMerchant: normalize(selectedMerchant.payout_velocity_hrs, categoryRanges.payoutVelocity),
         normMedian: normalize(categoryMedians.medianPayoutVelocity, categoryRanges.payoutVelocity),
         isAnomaly: selectedMerchant.payout_velocity_hrs < categoryMedians.medianPayoutVelocity * 0.4,
-        direction: 'lower',
       },
     ];
   }, [selectedMerchant, categoryMedians, categoryRanges]);
@@ -217,12 +205,11 @@ export const BehaviourTwinScreen: React.FC = () => {
     }));
   }, [comparisonMetrics]);
 
-  // Behaviour observations generated dynamically from calculations
+  // Behaviour observations
   const observations = useMemo(() => {
     if (!categoryMedians) return [];
     const obs: { title: string; desc: string; type: 'warning' | 'alert' | 'normal' }[] = [];
 
-    // 1. Off-hours
     if (selectedMerchant.off_hours_ratio > categoryMedians.medianOffHoursRatio * 2.2) {
       obs.push({
         title: 'Off-hours activity significantly above peers',
@@ -241,7 +228,6 @@ export const BehaviourTwinScreen: React.FC = () => {
       });
     }
 
-    // 2. Payout velocity
     if (selectedMerchant.payout_velocity_hrs < categoryMedians.medianPayoutVelocity * 0.4) {
       obs.push({
         title: 'Payout velocity is unusually rapid',
@@ -260,7 +246,6 @@ export const BehaviourTwinScreen: React.FC = () => {
       });
     }
 
-    // 3. Round amount ratio
     if (selectedMerchant.round_amount_ratio > categoryMedians.medianRoundAmountRatio * 1.7) {
       obs.push({
         title: 'Elevated round-amount frequency',
@@ -271,14 +256,13 @@ export const BehaviourTwinScreen: React.FC = () => {
       });
     }
 
-    // 4. Dispute rate
     if (selectedMerchant.dispute_rate_pct > categoryMedians.medianDisputeRate * 2.5 && selectedMerchant.dispute_rate_pct > 0.3) {
       obs.push({
         title: 'Elevated dispute & chargeback friction',
         desc: `Dispute rate of ${formatPercent(selectedMerchant.dispute_rate_pct, true)} is significantly elevated above peer median (${formatPercent(
           categoryMedians.medianDisputeRate,
           true
-        )}), highlighting consumer dissatisfaction or unfulfilled services.`,
+        )}), highlighting consumer friction.`,
         type: 'alert',
       });
     } else {
@@ -291,7 +275,6 @@ export const BehaviourTwinScreen: React.FC = () => {
       });
     }
 
-    // 5. Avg ticket size
     if (selectedMerchant.avg_txn_value_inr > categoryMedians.medianAvgTxnValue * 2.5) {
       obs.push({
         title: 'Average transaction value significantly exceeds category norm',
@@ -307,47 +290,50 @@ export const BehaviourTwinScreen: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Screen Header */}
-      <div className="bg-[#111827] border border-[#243049] rounded-xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Layers className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-bold text-white tracking-wide">Behaviour Twin Analysis</h2>
-            <span className="text-xs font-mono bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">
-              {selectedMerchant.merchant_id}
-            </span>
+      {/* Screen Section Header Card */}
+      <div className="bg-white rounded-2xl border border-[#E8EAF0] shadow-card p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#F3F4F6] gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-[#FDF2F2] text-[#C8102E] flex items-center justify-center shrink-0">
+              <Layers className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-[#111827] tracking-tight">
+                Behaviour Twin Analysis
+              </h2>
+              <span className="text-xs text-[#6B7280]">
+                Comparing <strong className="font-mono text-[#111827]">{selectedMerchant.merchant_id}</strong> against{' '}
+                <strong className="text-[#111827]">{formatNumber(categoryPeers.length)}</strong> peers in{' '}
+                <strong className="text-[#111827]">{selectedMerchant.declared_category}</strong>
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-slate-400">
-            Benchmarking <span className="text-slate-200 font-medium">{selectedMerchant.merchant_id}</span> against{' '}
-            <span className="text-cyan-400 font-mono font-semibold">{formatNumber(categoryPeers.length)}</span> peer merchants in{' '}
-            <span className="text-slate-200 font-semibold">{selectedMerchant.declared_category}</span>.
-          </p>
-        </div>
 
-        {/* Quick Merchant Switcher */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Switch Merchant:</span>
-          <select
-            value={selectedMerchant.merchant_id}
-            onChange={e => selectMerchant(e.target.value)}
-            className="bg-[#162032] border border-[#2B3B55] text-xs text-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 font-mono"
-          >
-            {merchants.map(m => (
-              <option key={m.merchant_id} value={m.merchant_id}>
-                {m.merchant_id} ({m.declared_category})
-              </option>
-            ))}
-          </select>
+          {/* Quick Merchant Switcher Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#6B7280]">Switch Merchant:</span>
+            <select
+              value={selectedMerchant.merchant_id}
+              onChange={e => selectMerchant(e.target.value)}
+              className="bg-white border border-[#E8EAF0] text-xs text-[#374151] px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-[#C8102E] font-mono cursor-pointer"
+            >
+              {merchants.map(m => (
+                <option key={m.merchant_id} value={m.merchant_id}>
+                  {m.merchant_id} ({m.declared_category})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Grid: 8 Comparison Metric Cards */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6B7280]">
             Category Peer Medians vs. Observed Merchant Behaviour
           </h3>
-          <span className="text-[11px] text-slate-400">Calculated dynamically across category peers</span>
+          <span className="text-[11px] text-[#9CA3AF]">Dynamic peer median calculation</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -356,58 +342,59 @@ export const BehaviourTwinScreen: React.FC = () => {
             return (
               <div
                 key={m.id}
-                className={`p-4 rounded-xl bg-[#111827] border ${
-                  m.isAnomaly ? 'border-amber-500/40 bg-[#161D2E]' : 'border-[#243049]'
-                } transition-all shadow-sm`}
+                className={`p-4 rounded-2xl bg-white border ${
+                  m.isAnomaly
+                    ? 'border-rose-200 bg-[#FFFBFB]'
+                    : 'border-[#E8EAF0]'
+                } shadow-card transition-all`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-medium text-slate-400 truncate" title={m.label}>
+                  <span className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wider truncate" title={m.label}>
                     {m.label}
                   </span>
                   <span
-                    className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                    className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ${
                       m.isAnomaly
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-slate-800 text-slate-400'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    {isPositive ? '+' : ''}
-                    {m.deltaPct.toFixed(1)}%
+                    {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {Math.abs(m.deltaPct).toFixed(1)}%
                   </span>
                 </div>
 
                 {/* Values */}
                 <div className="flex items-baseline justify-between mb-2">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Merchant</span>
-                    <span className="text-base font-bold font-mono text-cyan-400">{m.formattedMerchant}</span>
+                    <span className="text-[10px] text-[#9CA3AF] block uppercase">Merchant</span>
+                    <span className="text-base font-semibold font-mono text-[#111827]">{m.formattedMerchant}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block">Category Median</span>
-                    <span className="text-sm font-semibold font-mono text-slate-400">{m.formattedMedian}</span>
+                    <span className="text-[10px] text-[#9CA3AF] block uppercase">Category Median</span>
+                    <span className="text-xs font-mono text-[#6B7280]">{m.formattedMedian}</span>
                   </div>
                 </div>
 
-                {/* Visual Comparison Bar */}
+                {/* Thin Comparison Bar */}
                 <div className="relative pt-2">
-                  <div className="w-full h-2 bg-[#0C1220] rounded-full overflow-hidden border border-[#1E293B] relative">
-                    {/* Merchant Fill */}
+                  <div className="w-full h-1.5 bg-[#E8EAF0] rounded-full overflow-hidden relative">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
-                        m.isAnomaly ? 'bg-amber-400' : 'bg-cyan-400'
+                        m.isAnomaly ? 'bg-[#C8102E]' : 'bg-[#111827]'
                       }`}
                       style={{ width: `${m.normMerchant}%` }}
                     />
                   </div>
                   {/* Category median tick */}
                   <div
-                    className="absolute top-1 w-0.5 h-4 bg-slate-400 z-10"
+                    className="absolute top-1.5 w-0.5 h-3 bg-[#6B7280] z-10"
                     style={{ left: `${m.normMedian}%` }}
                     title={`Peer Median: ${m.formattedMedian}`}
                   />
-                  <div className="flex justify-between text-[9px] text-slate-400 mt-1">
+                  <div className="flex justify-between text-[9px] text-[#9CA3AF] mt-1 font-mono">
                     <span>Min</span>
-                    <span>Median (line)</span>
+                    <span>Median</span>
                     <span>Max</span>
                   </div>
                 </div>
@@ -420,68 +407,75 @@ export const BehaviourTwinScreen: React.FC = () => {
       {/* Main Analysis Section: Radar Chart + Explainable Observations */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Radar Chart (7 cols) */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#243049] rounded-xl p-5 shadow-lg flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-[#E8EAF0] shadow-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-semibold text-white">Multi-Dimensional Behaviour Radar</h3>
-              <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">
-                Peer Normalized (0-100)
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#F3F4F6]">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#FDF2F2] text-[#C8102E] flex items-center justify-center">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-[#111827]">Multi-Dimensional Behaviour Radar</h3>
+              </div>
+              <span className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+                Normalized Scale (0-100)
               </span>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Normalized comparative profile: Merchant (cyan) versus category peer median (slate/blue). Values mapped relative to category bounds.
+            <p className="text-xs text-[#6B7280] mb-2">
+              Merchant (<strong className="text-[#C8102E]">crimson</strong>) versus category peer median (<strong className="text-[#111827]">near-black</strong>).
             </p>
           </div>
 
           <div className="h-[360px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} outerRadius="70%">
-                <PolarGrid stroke="#243049" />
+                <PolarGrid stroke="#E8EAF0" />
                 <PolarAngleAxis
                   dataKey="metric"
-                  stroke="#94A3B8"
-                  tick={{ fill: '#94A3B8', fontSize: 11 }}
+                  stroke="#6B7280"
+                  tick={{ fill: '#4B5563', fontSize: 11, fontFamily: 'Instrument Sans, sans-serif' }}
                 />
                 <PolarRadiusAxis
                   angle={30}
                   domain={[0, 100]}
-                  stroke="#1E293B"
-                  tick={{ fill: '#64748B', fontSize: 9 }}
+                  stroke="#E8EAF0"
+                  tick={{ fill: '#9CA3AF', fontSize: 9 }}
                 />
                 <Radar
                   name="Category Median"
                   dataKey="Category Median"
-                  stroke="#64748B"
-                  fill="#475569"
-                  fillOpacity={0.25}
+                  stroke="#111827"
+                  strokeWidth={1.5}
+                  fill="#111827"
+                  fillOpacity={0.08}
                 />
                 <Radar
                   name={selectedMerchant.merchant_id}
                   dataKey="Merchant"
-                  stroke="#38BDF8"
-                  fill="#38BDF8"
-                  fillOpacity={0.4}
+                  stroke="#C8102E"
+                  strokeWidth={2}
+                  fill="#C8102E"
+                  fillOpacity={0.2}
                 />
                 <Legend
-                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px', fontFamily: 'Instrument Sans, sans-serif' }}
                 />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-[#0C1220] border border-[#2B3B55] p-3 rounded-lg shadow-xl text-xs space-y-1">
-                          <p className="font-semibold text-white border-b border-[#243049] pb-1">
+                        <div className="bg-white border border-[#E8EAF0] p-3 rounded-xl shadow-lg text-xs space-y-1">
+                          <p className="font-semibold text-[#111827] border-b border-[#F3F4F6] pb-1">
                             {data.metric}
                           </p>
-                          <p className="text-cyan-400">
+                          <p className="text-[#C8102E]">
                             Merchant: <span className="font-mono font-bold">{data.rawMerchant}</span>
                           </p>
-                          <p className="text-slate-400">
+                          <p className="text-[#4B5563]">
                             Peer Median: <span className="font-mono">{data.rawMedian}</span>
                           </p>
-                          <p className="text-amber-400 text-[11px]">
-                            Deviation: <span className="font-mono">{data.delta}</span>
+                          <p className="text-[#6B7280] text-[11px]">
+                            Deviation: <span className="font-mono font-semibold">{data.delta}</span>
                           </p>
                         </div>
                       );
@@ -493,19 +487,21 @@ export const BehaviourTwinScreen: React.FC = () => {
             </ResponsiveContainer>
           </div>
 
-          <div className="text-[10px] text-slate-400 border-t border-[#1E293B] pt-2 mt-2">
+          <div className="text-[10px] text-[#9CA3AF] border-t border-[#F3F4F6] pt-2 mt-2">
             Axes are scaled onto a normalized 0-100 peer envelope to avoid distortion between currency, ratios, and hours.
           </div>
         </div>
 
         {/* Explainable Behaviour Observations (5 cols) */}
-        <div className="lg:col-span-5 bg-[#111827] border border-[#243049] rounded-xl p-5 shadow-lg flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#E8EAF0] shadow-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <AlertCircle className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-white">Automated Behaviour Observations</h3>
+            <div className="flex items-center gap-2 pb-3 mb-2 border-b border-[#F3F4F6]">
+              <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center">
+                <AlertCircle className="w-3.5 h-3.5" />
+              </div>
+              <h3 className="text-sm font-semibold text-[#111827]">Automated Behaviour Observations</h3>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-[#6B7280] mb-4">
               Explainable divergence findings based strictly on calculated category peer deviations.
             </p>
 
@@ -513,36 +509,36 @@ export const BehaviourTwinScreen: React.FC = () => {
               {observations.map((obs, idx) => (
                 <div
                   key={idx}
-                  className={`p-3 rounded-lg border text-xs ${
+                  className={`p-3.5 rounded-xl border text-xs ${
                     obs.type === 'alert'
-                      ? 'bg-red-500/10 border-red-500/30'
+                      ? 'bg-rose-50/60 border-rose-200 text-rose-900'
                       : obs.type === 'warning'
-                      ? 'bg-amber-500/10 border-amber-500/30'
-                      : 'bg-[#151F33] border-[#243049]'
+                      ? 'bg-amber-50/60 border-amber-200 text-amber-900'
+                      : 'bg-[#F9FAFB] border-[#E8EAF0] text-[#374151]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {obs.type === 'normal' ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : (
                       <AlertCircle
-                        className={`w-3.5 h-3.5 ${
-                          obs.type === 'alert' ? 'text-red-400' : 'text-amber-400'
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          obs.type === 'alert' ? 'text-[#C8102E]' : 'text-amber-600'
                         }`}
                       />
                     )}
-                    <span className="font-semibold text-white text-[12px]">{obs.title}</span>
+                    <span className="font-semibold text-[#111827] text-[12px]">{obs.title}</span>
                   </div>
-                  <p className="text-slate-300 text-[11px] leading-relaxed pl-5.5">{obs.desc}</p>
+                  <p className="text-[#4B5563] text-[11px] leading-relaxed pl-5">{obs.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Critical Context & Methodology Limitation Notice */}
-          <div className="mt-4 p-3 rounded-lg bg-[#0C1220] border border-[#243049] text-[11px] text-slate-400 space-y-1">
-            <span className="font-semibold text-slate-300 block">Methodological Scope:</span>
-            <p className="text-[10px] leading-relaxed">
+          <div className="mt-4 p-3 rounded-xl bg-[#F9FAFB] border border-[#E8EAF0] text-[11px] text-[#6B7280] space-y-1">
+            <span className="font-medium text-[#374151] block">Methodological Scope:</span>
+            <p className="text-[10px] leading-relaxed text-[#6B7280]">
               The Behaviour Twin represents a category-relative comparison across monthly aggregate metrics. It does not
               represent historical daily or hourly time-series. Statistical divergence highlights operational anomalies for
               investigation and does not constitute evidence of illicit activity.

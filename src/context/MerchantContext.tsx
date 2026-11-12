@@ -22,11 +22,14 @@ interface MerchantContextValue {
   counterpartyMap: Map<string, CounterpartyMeta>;
   isLoading: boolean;
   error: string | null;
+  datasetName: string;
+  successMessage: string | null;
   activeTab: 'profile' | 'twin' | 'network';
   setActiveTab: (tab: 'profile' | 'twin' | 'network') => void;
   loadCsvFile: (file: File) => Promise<void>;
   reloadDefaultDataset: () => Promise<void>;
   dismissError: () => void;
+  dismissSuccessMessage: () => void;
 }
 
 const MerchantContext = createContext<MerchantContextValue | null>(null);
@@ -36,6 +39,8 @@ export const MerchantProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [datasetName, setDatasetName] = useState<string>('payu_merchant_fraud_dataset_enhanced.csv');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'twin' | 'network'>('profile');
 
   // Load default dataset on mount
@@ -45,6 +50,7 @@ export const MerchantProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const data = await loadDefaultDataset();
       setMerchants(data);
+      setDatasetName('payu_merchant_fraud_dataset_enhanced.csv (Default)');
       if (data.length > 0) {
         setSelectedMerchantId(data[0].merchant_id);
       }
@@ -63,9 +69,12 @@ export const MerchantProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const handleLoadFile = async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
     try {
       const data = await parseCsvFile(file);
       setMerchants(data);
+      setDatasetName(file.name);
+      setSuccessMessage(`Successfully imported ${data.length.toLocaleString()} merchants from "${file.name}".`);
       if (data.length > 0) {
         setSelectedMerchantId(data[0].merchant_id);
       }
@@ -173,11 +182,14 @@ export const MerchantProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         counterpartyMap,
         isLoading,
         error,
+        datasetName,
+        successMessage,
         activeTab,
         setActiveTab,
         loadCsvFile: handleLoadFile,
         reloadDefaultDataset: loadDefault,
         dismissError: () => setError(null),
+        dismissSuccessMessage: () => setSuccessMessage(null),
       }}
     >
       {children}
@@ -192,4 +204,3 @@ export const useMerchant = (): MerchantContextValue => {
   }
   return context;
 };
-
